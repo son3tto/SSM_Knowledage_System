@@ -1,0 +1,423 @@
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title th:text="登录"></title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="/layui/css/layui.css">
+    <link rel="stylesheet" th:href="@{/css/community.css}">
+    <link rel="stylesheet" th:href="@{/css/admin.css}">
+    <script th:src="@{/js/jquery-3.4.1.min.js}"></script>
+    <script th:src="@{/layui/layui.js}" type="application/javascript"></script>
+    <script src="https://ssl.captcha.qq.com/TCaptcha.js"></script>
+    <script type="application/javascript">
+        window.onload=function () {
+            var url=window.location.href;                    //获取当前页面的url
+            if(url.indexOf("?")!=-1){                        //判断是否存在参数
+                url = url.replace(/(\?|#)[^'"]*/, '');           //去除参数
+                window.history.replaceState({},0,url);
+            }
+
+            $(".autocomplete ul li").each(function () {
+                $(this).bind({
+                    click:function () {
+                        $("#account").val($(this).text());
+                        $(".on").removeClass("on");
+                        $(this).addClass("on");
+                        $(".autocomplete").addClass("layui-hide");
+                    },
+                    mouseover:function () {
+                        $(this).addClass("mouseoverTarget");
+                    },
+                    mouseout:function () {
+                        $(this).removeClass("mouseoverTarget");
+                    }
+                });
+            });
+
+            $("#account").on("keydown", function (e) {
+                if(!$(".autocomplete").hasClass("layui-hide")){
+                    if(e.keyCode == 38){
+                        var size = $(".on").prevAll("li[class!='layui-hide']").length;
+                        if(size > 0){
+                            $(".on").prevAll("li[class!='layui-hide']:first").addClass("on");
+                            $(".on:last").removeClass("on");
+                        }else{
+                            $(".on:first").removeClass("on");
+                            $(".autocomplete li[class!='layui-hide']:last").addClass("on");
+                        }
+                    }else if (e.keyCode == 40){
+                        var size = $(".on").nextAll("li[class!='layui-hide']").length;
+                        if(size > 0){
+                            $(".on").nextAll("li[class!='layui-hide']:first").addClass("on");
+                            $(".on:first").removeClass("on");
+                        }else{
+                            $(".on:last").removeClass("on");
+                            $(".autocomplete li[class!='layui-hide']:first").addClass("on");
+                        }
+                    }else if(e.keyCode == 13){
+                        $("#account").val($(".on").text());
+                        $(".autocomplete").addClass("layui-hide");
+                    }
+                }
+            });
+
+            $("#account").on("keyup", function (e) {
+                var account = $("#account").val();
+                if(account.indexOf('@') != 0 && account.indexOf('@') != -1 && e.keyCode != 13 && e.keyCode != 38 && e.keyCode != 40){
+                    var prefix = account.split("@")[0];
+                    var aa = account.split("@")[1];
+                    $(".autocomplete ul li").each(function () {
+                        var suffix = $(this).text();
+                        var suffix2 = suffix.split("@")[1];
+                        if(suffix2.indexOf(aa) != -1){
+                            $(this).text(prefix + '@' + suffix2);
+                            $(this).removeClass("layui-hide");
+                        }else{
+                            $(this).addClass("layui-hide");
+                        }
+                    });
+                    $(".on").removeClass("on");
+                    $(".autocomplete li[class!='layui-hide']:first").addClass("on");
+                    if($(".autocomplete li[class!='layui-hide']").length != 0){
+                        $(".autocomplete").removeClass("layui-hide");
+                    }else{
+                        $(".autocomplete").addClass("layui-hide");
+                    }
+                }else if(e.keyCode != 38 && e.keyCode != 40){
+                    $(".autocomplete").addClass("layui-hide");
+                }
+            });
+        };
+
+        layui.use('element',function () {
+            var element = layui.element;
+        });
+
+        function type(value) {
+            if(value == 1){
+                $(".login-ul span:first").addClass("login-active");
+                $(".login-ul span:last").removeClass("login-active");
+                $(".login-a").removeClass("layui-hide");
+                $(".login-b").addClass("layui-hide");
+                $("#loginType").val(1);
+            }else if(value == 2){
+                $(".login-ul span:last").addClass("login-active");
+                $(".login-ul span:first").removeClass("login-active");
+                $(".login-b").removeClass("layui-hide");
+                $(".login-a").addClass("layui-hide");
+                $("#loginType").val(2);
+            }
+        }
+
+        function checkAccount() {
+            var check = false;
+            var account = $("#account").val();
+            if(!account){
+                $("#account").next().html("请输入手机号或者邮箱");
+                check = false;
+            }else{
+                $("#account").next().html("");
+                check = true;
+            }
+            return check;
+        }
+
+        function checkPassword() {
+            var check = false;
+            var password = $("#password").val();
+            if(!password){
+                $("#password").next().html("请输入密码");
+                check = false;
+            }else{
+                $("#password").next().html("");
+                check = true;
+            }
+            return check;
+        }
+
+        function checkPhone() {
+            var check = false;
+            var phone = $("#phone").val();
+            var regExp = /^1(3|4|5|6|7|8|9)\d{9}$/;
+            if(!phone){
+                $("#phone").next().html("请输入注册时用的手机号");
+                check = false;
+            }else if(regExp.test(phone) == false){
+                $("#phone").next().html("请输入正确的手机号");
+                check = false;
+            }else{
+                $("#phone").next().html("");
+                check = true;
+            }
+            return check;
+        }
+
+        function checkCode() {
+            var check = false;
+            var code = $("#code").val();
+            if(!code){
+                $("#code").parent().next().html("请输入验证码");
+                check = false;
+            }else{
+                $("#code").parent().next().html("");
+                check = true;
+            }
+            return check;
+        }
+
+        var countdown=60;
+        function getCode(value) {
+            var obj = $("#el-code-button");
+            var span = obj.children();
+            var phone = $("#phone").val();
+            var regExp = /^1(3|4|5|6|7|8|9)\d{9}$/;
+            if(!phone){
+                $("#phone").next().html("请输入手机号");
+            }else if(regExp.test(phone) == false){
+                $("#phone").next().html("请输入正确的手机号");
+            }else{
+                var captcha1 = new TencentCaptcha('2077491291', function(res) {
+                    if(res.ret == 0){
+                        $.ajax({
+                            type:"post",
+                            url:"/checkCaptcha",
+                            contentType:"application/json",
+                            data:JSON.stringify({
+                                "ticket":res.ticket,
+                                "randstr":res.randstr
+                            }),
+                            success:function (result) {
+                                if(result.code == 200) {
+                                    $.ajax({
+                                        type:"post",
+                                        url:"/getCode/"+value,
+                                        contentType:"application/json",
+                                        data: phone,
+                                        success:function (result) {
+                                            if(result.code == 200){
+                                                settime(obj,span);
+                                            }else{
+                                                $("#phone").next().html(result.message);
+                                            }
+                                        },
+                                        dataType:"json"
+                                    });
+                                }
+                            },
+                            dataType:"json"
+                        });
+                    }
+                });
+                captcha1.show(); // 显示验证码
+            }
+
+        }
+
+        function settime(obj,span) { //发送验证码倒计时
+            if (countdown == 0) {
+                obj.attr('disabled',false);
+                span.html("获取验证码");
+                countdown = 60;
+                return;
+            } else {
+                obj.attr('disabled',true);
+                span.html("" + countdown + "s后重新获取");
+                countdown--;
+            }
+            setTimeout(function(){
+                settime(obj,span);
+            },1000)
+        }
+
+        //记住密码功能
+        var flag = 1;
+        function remember(){
+            var remFlag = $("input[type='checkbox']").is(':checked');
+            if(remFlag==true){
+                flag = 1;
+            }else{
+                flag = 0;
+            }
+        }
+
+        function check() {
+            var check = false;
+            var choice = 1;
+            var phone;
+            var account;
+            var type = $("#loginType").val();
+            if(checkAccount() && checkPassword() && type == 1){
+                account = $("#account").val();
+                check = true;
+            }else if(checkPhone() && checkCode() && type == 2){
+                phone = $("#phone").val();
+                check = true;
+                choice = 2;
+            }
+            var password = $("#password").val();
+            var code = $("#code").val();
+            var oauthsId = $("#oauthsId").val();
+            var oauthsType = $("#oauthsType").val();
+            if(check == true){
+                if(choice == 1){
+                    var captcha1 = new TencentCaptcha('2077491291', function(res) {
+                        if(res.ret == 0){
+                            $.ajax({
+                                type:"post",
+                                url:"/checkCaptcha",
+                                contentType:"application/json",
+                                data:JSON.stringify({
+                                    "ticket":res.ticket,
+                                    "randstr":res.randstr
+                                }),
+                                success:function (result) {
+                                    if(result.code == 200){
+                                        $.ajax({
+                                            type:"post",
+                                            url:"/loginUser/"+type,
+                                            contentType:"application/json",
+                                            data:JSON.stringify({
+                                                "account":account,
+                                                "password":password,
+                                                "flag":flag,
+                                                "oauthsId":oauthsId,
+                                                "oauthsType":oauthsType
+                                            }),
+                                            success:function (result) {
+                                                if(result.code == 200){
+                                                    window.location.href="/success?info=登录成功";
+                                                }else{
+                                                    $("#password").next().html(result.message);
+                                                }
+                                            },
+                                            dataType:"json"
+                                        });
+                                    }
+                                },
+                                dataType:"json"
+                            });
+                        }
+                    });
+                    captcha1.show(); // 显示验证码
+                }else{
+                    $.ajax({
+                        type:"post",
+                        url:"/loginUser/"+type,
+                        contentType:"application/json",
+                        data:JSON.stringify({
+                            "phone":phone,
+                            "code":code,
+                            "flag":flag,
+                            "oauthsId":oauthsId,
+                            "oauthsType":oauthsType
+                        }),
+                        success:function (result) {
+                            if(result.code == 200){
+                                window.location.href="/success?info=登录成功";
+                            }else{
+                                $("#code").parent().next().html(result.message);
+                            }
+                        },
+                        dataType:"json"
+                    });
+                }
+            }
+        }
+
+        function qqlogin() {
+            var min = 10000000//这里改成你需要的最小值
+            var max = 99999999//这里改成你需要的最大值
+            var state = Math.floor(Math.random() * (max - min + 1) + min);
+            window.location.href ="https://graph.qq.com/oauth2.0/authorize?response_type=code&client_id=101853590&state="+state+"&redirect_uri="
+                +encodeURI("http://www.treedong.com/loginCallbackqq");
+        }
+    </script>
+</head>
+<body class="background-image">
+<div th:replace="navigation :: nav"></div>
+<!--style="background: white"-->
+<div class="layui-container tree-marginTop">
+    <div class="layui-row">
+        <div class="register-main">
+            <div class="title-line">
+                <span class="tit">登录</span>
+            </div>
+            <div class="register-container">
+                <form id="loginForm" method="post">
+                    <div class="form-group" style="margin-bottom: 15px">
+                        <div class="login-ul">
+                            <span class="login-active"><a href="javascript:type(1)">密码登录</a></span>
+                            <span><a href="javascript:type(2)">短信登录</a></span>
+                        </div>
+                    </div>
+                    <div class="login-a">
+                        <div class="form-group" style="position: relative;">
+                            <input type="text" class="el-input" id="account" name="account" placeholder="你的手机号/邮箱" autocomplete="off" onkeyup="checkAccount()">
+                            <p class="error-message"></p>
+                            <div class="autocomplete layui-hide" style="top: 48px;">
+                                <ul>
+                                    <li class="on">@qq.com</li>
+                                    <li>@163.com</li>
+                                    <li>@126.com</li>
+                                    <li>@gmail.com</li>
+                                    <li>@foxmail.com</li>
+                                    <li>@sina.com</li>
+                                    <li>@yeah.net</li>
+                                    <li>@sohu.com</li>
+                                    <li>@outlook.com</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <input type="password" class="el-input" id="password" name="password" placeholder="密码" autocomplete="off" onkeyup="checkPassword()">
+                            <p class="error-message"></p>
+                        </div>
+                    </div>
+                    <div class="login-b layui-hide">
+                        <div class="form-group">
+                            <input type="text" class="el-input" id="phone" name="phone" placeholder="填写常用手机号" autocomplete="off" onkeyup="checkPhone()">
+                            <p class="error-message"></p>
+                        </div>
+                        <div class="form-group">
+                            <div class="el-code">
+                                <input type="text" class="el-input" id="code" name="code" placeholder="请输入短信验证码" autocomplete="off" onkeyup="checkCode()">
+                                <button type="button" class="btn-login el-code-button" onclick="getCode(2)" id="el-code-button"><span>点击获取</span></button>
+                            </div>
+                            <p class="error-message"></p>
+                        </div>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 5px;">
+                        <label for="remember-me" style="font-weight: normal;font-size: 12px;cursor: pointer;">
+                            <input id="remember-me" name="remember-me" type="checkbox" checked="checked" onclick="remember()" style="vertical-align: text-bottom;cursor: pointer;">
+                            记住我
+                            <span class="remember-me-span">不是自己的电脑上不要勾选此项</span>
+                        </label>
+                        <div style="display: inline-block;float: right;font-size: 12px">
+                            <a th:href="@{/findpassword}" class="forget-password">忘记密码?</a>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <a href="javascript:check()" class="btn-login el-button" th:text="${oauthsType==null || oauthsType == ''?'登录':'授权并登录'}"></a>
+                        <a th:href="@{/register}" class="btn-register el-button">注册</a>
+                    </div>
+                    <div class="form-group other-way-login">
+                        <!--<span>其他方式登录：</span>-->
+                        <div class="title-line"><span class="other-login-words">更多登录方式</span></div>
+                        <div class="other-login-content">
+                            <a class="github-login" title="GitHub授权登录"
+                               th:href="@{https://github.com/login/oauth/authorize(client_id='a7984ce94e8e4c8c796d',redirect_uri=${#httpServletRequest.getRequestURL()+'Callback'},scope='user',state=1)}"><img src="/images/github.png"></a>
+                            <a class="qq-login" title="qq授权登录" onclick="qqlogin()"><img src="/images/QQ.png"></a>
+                        </div>
+                    </div>
+                    <input type="hidden" id="oauthsId"  th:value="${oauthsId}">
+                    <input type="hidden" id="oauthsType"   th:value="${oauthsType}">
+                    <input type="hidden" id="loginType" value="1">
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<div th:replace="footer :: foot"></div>
+</body>
+</html>

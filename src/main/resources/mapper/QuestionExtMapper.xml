@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tree.community.mapper.QuestionExtMapper">
+  <resultMap id="BaseResultMap" type="com.tree.community.model.Question">
+    <id column="id" jdbcType="BIGINT" property="id" />
+    <result column="title" jdbcType="VARCHAR" property="title" />
+    <result column="gmt_create" jdbcType="BIGINT" property="gmtCreate" />
+    <result column="gmt_modified" jdbcType="BIGINT" property="gmtModified" />
+    <result column="creator" jdbcType="BIGINT" property="creator" />
+    <result column="comment_count" jdbcType="INTEGER" property="commentCount" />
+    <result column="view_count" jdbcType="INTEGER" property="viewCount" />
+    <result column="like_count" jdbcType="INTEGER" property="likeCount" />
+    <result column="tag" jdbcType="VARCHAR" property="tag" />
+    <result column="type" jdbcType="INTEGER" property="type" />
+    <result column="essence" jdbcType="BIT" property="essence" />
+    <result column="is_top" jdbcType="BIT" property="isTop" />
+  </resultMap>
+  <select id="selectRelated" parameterType="com.tree.community.model.Question" resultMap="BaseResultMap">
+    select * from question where id != #{id} and tag regexp #{tag} order by comment_count desc,gmt_create desc limit 10
+  </select>
+
+  <select id="countBySearch" parameterType="com.tree.community.dto.QuestionQueryDTO" resultType="java.lang.Integer">
+    select count(*) from question
+     <where>
+       <if test="search != null and search != ''">
+         and title regexp #{search}
+       </if>
+       <if test="tag != null and tag != ''">
+         and tag regexp #{tag}
+       </if>
+       <if test="type != null and type != ''">
+         and type = #{type}
+       </if>
+       <if test="sort != null and (sort == 7 or sort == 32)">
+         and to_days(now())-to_days(FROM_UNIXTIME(round(gmt_create / 1000,0))) &lt; #{sort}
+       </if>
+       <if test="sort != null and sort == 0">
+         and comment_count = #{sort}
+       </if>
+       <if test="sort != null and sort == 2">
+         and essence = 1
+       </if>
+       <if test="quIds != null and quIds.size() > 0">
+         and id not in
+         <foreach collection="quIds" item="item" index="index" open="(" close=")" separator=",">
+           #{item}
+         </foreach>
+       </if>
+     </where>
+  </select>
+
+  <select id="selectBySearch" parameterType="com.tree.community.dto.QuestionQueryDTO" resultMap="BaseResultMap">
+    select * from question
+    <where>
+      <if test="search != null and search != ''">
+        and title regexp #{search}
+      </if>
+      <if test="tag != null and tag != ''">
+        and tag regexp #{tag}
+      </if>
+      <if test="type != null and type != ''">
+        and type = #{type}
+      </if>
+      <if test="sort != null and (sort == 7 or sort == 32)">
+        and to_days(now())-to_days(FROM_UNIXTIME(round(gmt_create / 1000,0))) &lt; #{sort}
+      </if>
+      <if test="sort != null and sort == 0">
+        and comment_count = #{sort}
+      </if>
+      <if test="sort != null and sort == 2">
+        and essence = 1
+      </if>
+      <if test="quIds != null and quIds.size() > 0">
+        and id not in
+        <foreach collection="quIds" item="item" index="index" open="(" close=")" separator=",">
+          #{item}
+        </foreach>
+      </if>
+    </where>
+    <choose>
+      <when test="sort != null and (sort == 7 or sort == 32)">
+        order by like_count desc,comment_count desc,gmt_create desc limit #{page},#{size}
+      </when>
+      <otherwise>
+        order by gmt_create desc limit #{page},#{size}
+      </otherwise>
+    </choose>
+  </select>
+
+  <select id="getQuestionByIds" parameterType="java.util.List" resultMap="BaseResultMap">
+    select * from question
+    where id in
+    <foreach collection="list" item="item" open="(" close=")" separator=",">
+      #{item}
+    </foreach>
+    order by field(id,
+    <foreach collection="list"  item="item" index="index" separator=",">
+      #{item}
+    </foreach>
+    ) desc
+  </select>
+
+  <select id="getQuestion" resultMap="BaseResultMap">
+    select id,title,essence,is_top,creator from question order by gmt_create desc limit #{start},#{limit};
+  </select>
+
+  <select id="getQuestionCount" resultType="java.lang.Integer">
+    select count(*) from question;
+  </select>
+
+  <select id="questionTop" resultMap="BaseResultMap">
+    select * from question where is_top = 1 order by gmt_create desc limit 3;
+  </select>
+
+  <update id="incView" parameterType="com.tree.community.model.Question">
+    update question
+    set
+    view_count = view_count + #{viewCount,jdbcType=INTEGER}
+    where id = #{id}
+  </update>
+
+  <update id="incCommentCount" parameterType="com.tree.community.model.Question">
+    update question
+    set
+    comment_count = comment_count + #{commentCount,jdbcType=INTEGER}
+    where id = #{id}
+  </update>
+
+  <update id="decCommentCount" parameterType="com.tree.community.model.Question">
+    update question
+    set
+    comment_count = comment_count - #{commentCount,jdbcType=INTEGER}
+    where id = #{id}
+  </update>
+
+  <update id="incLikeCount" parameterType="com.tree.community.model.Question">
+    update question
+    set
+    like_count = like_count + #{likeCount}
+    where id = #{id}
+  </update>
+
+  <update id="questionEdit" parameterType="com.tree.community.model.Question">
+    update question
+    set
+    essence = #{essence},is_top = #{isTop}
+    where id = #{id}
+  </update>
+</mapper>

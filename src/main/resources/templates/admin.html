@@ -1,0 +1,910 @@
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title th:text="后台管理"></title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="/layui/css/layui.css">
+    <link rel="stylesheet" th:href="@{/css/editormd.min.css}">
+    <link rel="stylesheet" th:href="@{/css/admin.css}">
+    <link rel="stylesheet" href="/css/community.css">
+    <script th:src="@{/js/jquery-3.4.1.min.js}"></script>
+    <script src="https://cdn.staticfile.org/echarts/4.3.0/echarts.min.js"></script>
+    <script th:src="@{/layui/layui.js}" type="application/javascript"></script>
+    <script th:src="@{/js/editormd.js}" type="application/javascript"></script>
+    <script th:src="@{/js/wonderland.js}" type="application/javascript"></script>
+    <script src="https://www.runoob.com/static/js/wonderland.js"></script>
+    <script type="application/javascript">
+
+
+        function checkNickName() {
+            var check = false;
+            var nickName = $("#nickName").val();
+            var regExp = /^[\u4e00-\u9fa5 a-zA-Z0-9]{3,16}$/;
+            if(nickName == null || nickName == ""){
+                $("#nickName").next().html("请告诉我你的昵称吧");
+                check = false;
+            }else if(getByteLen(nickName)<6){
+                $("#nickName").next().html("昵称不能小于6个字符");
+                check = false;
+            }else if(getByteLen(nickName)>16){
+                $("#nickName").next().html("昵称不能大于16个字符");
+                check = false;
+            }else if(regExp.test(nickName) == false){
+                $("#nickName").next().html("昵称不能包含特殊字符,可以是字母，数字和汉字");
+                check = false;
+            }else{
+                $("#nickName").next().html("");
+                check = true;
+            }
+            return check;
+        }
+
+        function checkPassword() {
+            var check = false;
+            var password = $("#password").val();
+            var regExp=/^(\w){6,16}$/;
+            if(password == null || password == ""){
+                $("#password").next().html("请输入密码");
+                check = false;
+            }else if(password.length<6){
+                $("#password").next().html("密码不能小于6个字符");
+                check = false;
+            }else if(password.length>16){
+                $("#password").next().html("密码不能大于16个字符");
+                check = false;
+            }else if(regExp.test(password) == false){
+                $("#password").next().html("密码不能包含特殊字符,可以是字母，数字和下划线");
+                check = false;
+            }else{
+                $("#password").next().html("");
+                check = true;
+            }
+            return check;
+        }
+
+        function checkPhone() {
+            var check = false;
+            var phone = $("#phone").val();
+            var regExp = /^1(3|4|5|6|7|8|9)\d{9}$/;
+            if(phone == null || phone == ""){
+                $("#phone").next().html("请输入手机号");
+                check = false;
+            }else if(regExp.test(phone) == false){
+                $("#phone").next().html("请输入正确的手机号");
+                check = false;
+            }else{
+                $("#phone").next().html("");
+                check = true;
+            }
+            return check;
+        }
+
+        layui.use('element',function () {
+            var element = layui.element;
+        });
+
+        layui.use(['table','layer','form','upload'], function(){
+            var table = layui.table;
+            var layer = layui.layer;
+            var form = layui.form;
+            var upload = layui.upload;
+
+            //拖拽上传
+            upload.render({
+                elem: '#uploadFile'
+                ,url: '/file/uploadUser' //改成您自己的上传接口
+                ,accept: 'file' //普通文件
+                ,done: function(res){
+                    layer.msg('上传成功');
+                    layui.$('#uploadDemoView').removeClass('layui-hide').find('img').attr('src', res.files.file);
+                    console.log(res)
+                }
+            });
+
+            //第一个实例
+            table.render({
+                elem: '#essence'
+                ,url: '/admin/getQuestion' //数据接口
+                ,page: true //开启分页
+                ,cols: [
+                    [ //表头
+                        {field: 'id', title: 'ID', width:"10%",align: 'center'},
+                        {field: 'title', title: '标题', width:"45%"},
+                        {field: 'essence', title: '加精状态', width:"10%",align: 'center'},
+                        {field: 'isTop', title: '置顶状态', width:"10%",align: 'center'},
+                        {field:'right', title: '操作', width:"20%",toolbar:"#barDemo2",align: 'center'}
+                    ]
+                ]
+            });
+
+            table.render({
+                elem: '#user'
+                ,url: '/admin/getUser' //数据接口
+                ,page: true
+                ,cols: [
+                    [ //表头
+                        {field: 'id', title: 'ID', width:"5%",align: 'center'},
+                        {field: 'nickName', title: '昵称', width:"10%"},
+                        {field: 'phone', title: '手机号', width:"10%"},
+                        {field: 'sex', title: '性别', width:"5%",align: 'center', toolbar: "#barDemoSex"},
+                        {field: 'email', title: '邮箱', width:"20%",align: 'center'},
+                        {field:'grade', title: '等级', width:"5%",align: 'center'},
+                        {fixed: 'right', align:'center', toolbar: '#barDemo2'}
+                    ]
+                ]
+            });
+
+            table.render({
+                elem: '#question'
+                ,url: '/admin/getAllQuestion' //数据接口
+                ,page: true //开启分页
+                ,cols: [
+                    [ //表头
+                        {field: 'id', title: 'ID', align: 'center', width:"5%"},
+                        {field: 'title', title: '标题', align: 'center'},
+                        {field: 'gmtCreateModified', title: '创建时间',align: 'center'},
+                        {field:'commentCount', title: '评论数',align: 'center', width:"10%"},
+                        {field:'likeCount', title: '点赞数',align: 'center', width:"10%"},
+                        {field:'creator', title: '发起人',align: 'center', width:"10%"},
+                        {field:'type', title: '类型',align: 'center', width:"5%"},
+                        {field:'tag', title: '领域',align: 'center', width:"10%"},
+                        {fixed: 'right', align:'center', toolbar: '#barDemo3'}
+                    ]
+                ]
+            });
+            table.render({
+                elem: '#ask'
+                ,url: '/admin/getAsk' //数据接口
+                ,page: true //开启分页
+                ,cols: [
+                    [ //表头
+                        {field: 'id', title: 'ID', align: 'center', width:"5%"},
+                        {field: 'title', title: '标题', align: 'center'},
+                        {field: 'gmtCreateModified', title: '创建时间',align: 'center'},
+                        {field:'commentCount', title: '评论数',align: 'center', width:"10%"},
+                        {field:'likeCount', title: '点赞数',align: 'center', width:"10%"},
+                        {field:'creator', title: '发起人',align: 'center', width:"10%"},
+                        {field:'type', title: '类型',align: 'center', width:"5%"},
+                        {field:'tag', title: '领域',align: 'center', width:"10%"},
+                        {fixed: 'right', align:'center', toolbar: '#askbar'}
+                    ]
+                ]
+            });
+            table.render({
+                elem: '#share'
+                ,url: '/admin/getShare' //数据接口
+                ,page: true //开启分页
+                ,cols: [
+                    [ //表头
+                        {field: 'id', title: 'ID', align: 'center', width:"5%"},
+                        {field: 'title', title: '标题', align: 'center'},
+                        {field: 'gmtCreateModified', title: '创建时间',align: 'center'},
+                        {field:'commentCount', title: '评论数',align: 'center', width:"10%"},
+                        {field:'likeCount', title: '点赞数',align: 'center', width:"10%"},
+                        {field:'creator', title: '发起人',align: 'center', width:"10%"},
+                        {field:'type', title: '类型',align: 'center', width:"5%"},
+                        {field:'tag', title: '领域',align: 'center', width:"10%"},
+                        {fixed: 'right', align:'center', toolbar: '#sharebar'}
+                    ]
+                ]
+            });
+            table.render({
+                elem: '#advice'
+                ,url: '/admin/getAdvice' //数据接口
+                ,page: true //开启分页
+                ,cols: [
+                    [ //表头
+                        {field: 'id', title: 'ID', align: 'center', width:"5%"},
+                        {field: 'title', title: '标题', align: 'center'},
+                        {field: 'gmtCreateModified', title: '创建时间',align: 'center'},
+                        {field:'commentCount', title: '评论数',align: 'center', width:"10%"},
+                        {field:'likeCount', title: '点赞数',align: 'center', width:"10%"},
+                        {field:'creator', title: '发起人',align: 'center', width:"10%"},
+                        {field:'type', title: '类型',align: 'center', width:"5%"},
+                        {field:'tag', title: '领域',align: 'center', width:"10%"},
+                        {fixed: 'right', align:'center', toolbar: '#advicebar'}
+                    ]
+                ]
+            });
+            table.render({
+                elem: '#comment'
+                ,url: '/admin/getComment' //数据接口
+                ,page: true //开启分页
+                ,cols: [
+                    [ //表头
+                        {field: 'id', title: 'ID', align: 'center', width:"5%"},
+                        {field: 'title', title: '标题', align: 'center'},
+                        {field: 'gmtCreateModified', title: '创建时间',align: 'center'},
+                        {field:'commentCount', title: '评论数',align: 'center', width:"10%"},
+                        {field:'likeCount', title: '点赞数',align: 'center', width:"10%"},
+                        {field:'creator', title: '发起人',align: 'center', width:"10%"},
+                        {field:'type', title: '类型',align: 'center', width:"5%"},
+                        {field:'tag', title: '领域',align: 'center', width:"10%"},
+                        {fixed: 'right', align:'center', toolbar: '#commentbar'}
+                    ]
+                ]
+            });
+
+            //监听工具条
+            table.on('tool(question)', function(obj){ //注：tool 是工具条事件名，test 是 table 原始容器的属性 lay-filter="对应的值"
+                var data = obj.data; //获得当前行数据
+                var layEvent = obj.event; //获得 lay-event 对应的值（也可以是表头的 event 参数对应的值）
+
+                if(layEvent === 'detail'){ //查看
+                    layer.open({
+                        type: 2,
+                        title: '文章详情页',
+                        shade: 0,
+                        area: ['893px', '600px'],
+                        maxmin: true,
+                        content: ['/question/'+data.id]
+                    });
+                } else if(layEvent === 'del'){ //驳回
+                    layer.confirm('确定要删除文章吗？', {
+                        btn: ['确定','取消'] //按钮
+                    }, function(index){
+                        $.ajax({
+                            type:"post",
+                            url:"/question/deleteQu",
+                            contentType:"application/json",
+                            data:JSON.stringify({
+                                "questionId":data.id,
+                                "authorId":data.creator
+                            }),
+                            success:function (result) {
+                                if(result.code == 200){
+                                    window.location.reload();
+                                }
+                            },
+                            dataType:"json"
+                        });
+                    });
+                }
+            });
+
+            //监听工具条
+            table.on('tool(advice)', function(obj){ //注：tool 是工具条事件名，test 是 table 原始容器的属性 lay-filter="对应的值"
+                var data = obj.data; //获得当前行数据
+                var layEvent = obj.event; //获得 lay-event 对应的值（也可以是表头的 event 参数对应的值）
+
+                if(layEvent === 'detail'){ //查看
+                    layer.open({
+                        type: 2,
+                        title: '文章详情页',
+                        shade: 0,
+                        area: ['893px', '600px'],
+                        maxmin: true,
+                        content: ['/question/'+data.id]
+                    });
+                } else if(layEvent === 'del'){ //驳回
+                    layer.confirm('确定要删除文章吗？', {
+                        btn: ['确定','取消'] //按钮
+                    }, function(index){
+                        $.ajax({
+                            type:"post",
+                            url:"/question/deleteQu",
+                            contentType:"application/json",
+                            data:JSON.stringify({
+                                "questionId":data.id,
+                                "authorId":data.creator
+                            }),
+                            success:function (result) {
+                                if(result.code == 200){
+                                    window.location.reload();
+                                }
+                            },
+                            dataType:"json"
+                        });
+                    });
+                }
+            });
+            //监听工具条
+            table.on('tool(comment)', function(obj){ //注：tool 是工具条事件名，test 是 table 原始容器的属性 lay-filter="对应的值"
+                var data = obj.data; //获得当前行数据
+                var layEvent = obj.event; //获得 lay-event 对应的值（也可以是表头的 event 参数对应的值）
+
+                if(layEvent === 'detail'){ //查看
+                    layer.open({
+                        type: 2,
+                        title: '文章详情页',
+                        shade: 0,
+                        area: ['893px', '600px'],
+                        maxmin: true,
+                        content: ['/question/'+data.id]
+                    });
+                } else if(layEvent === 'del'){ //驳回
+                    layer.confirm('确定要删除文章吗？', {
+                        btn: ['确定','取消'] //按钮
+                    }, function(index){
+                        $.ajax({
+                            type:"post",
+                            url:"/question/deleteQu",
+                            contentType:"application/json",
+                            data:JSON.stringify({
+                                "questionId":data.id,
+                                "authorId":data.creator
+                            }),
+                            success:function (result) {
+                                if(result.code == 200){
+                                    window.location.reload();
+                                }
+                            },
+                            dataType:"json"
+                        });
+                    });
+                }
+            });
+            //监听工具条
+            table.on('tool(share)', function(obj){ //注：tool 是工具条事件名，test 是 table 原始容器的属性 lay-filter="对应的值"
+                var data = obj.data; //获得当前行数据
+                var layEvent = obj.event; //获得 lay-event 对应的值（也可以是表头的 event 参数对应的值）
+
+                if(layEvent === 'detail'){ //查看
+                    layer.open({
+                        type: 2,
+                        title: '文章详情页',
+                        shade: 0,
+                        area: ['893px', '600px'],
+                        maxmin: true,
+                        content: ['/question/'+data.id]
+                    });
+                } else if(layEvent === 'del'){ //驳回
+                    layer.confirm('确定要删除文章吗？', {
+                        btn: ['确定','取消'] //按钮
+                    }, function(index){
+                        $.ajax({
+                            type:"post",
+                            url:"/question/deleteQu",
+                            contentType:"application/json",
+                            data:JSON.stringify({
+                                "questionId":data.id,
+                                "authorId":data.creator
+                            }),
+                            success:function (result) {
+                                if(result.code == 200){
+                                    window.location.reload();
+                                }
+                            },
+                            dataType:"json"
+                        });
+                    });
+                }
+            });
+            //监听工具条
+            table.on('tool(ask)', function(obj){ //注：tool 是工具条事件名，test 是 table 原始容器的属性 lay-filter="对应的值"
+                var data = obj.data; //获得当前行数据
+                var layEvent = obj.event; //获得 lay-event 对应的值（也可以是表头的 event 参数对应的值）
+
+                if(layEvent === 'detail'){ //查看
+                    layer.open({
+                        type: 2,
+                        title: '文章详情页',
+                        shade: 0,
+                        area: ['893px', '600px'],
+                        maxmin: true,
+                        content: ['/question/'+data.id]
+                    });
+                } else if(layEvent === 'del'){ //驳回
+                    layer.confirm('确定要删除文章吗？', {
+                        btn: ['确定','取消'] //按钮
+                    }, function(index){
+                        $.ajax({
+                            type:"post",
+                            url:"/question/deleteQu",
+                            contentType:"application/json",
+                            data:JSON.stringify({
+                                "questionId":data.id,
+                                "authorId":data.creator
+                            }),
+                            success:function (result) {
+                                if(result.code == 200){
+                                    window.location.reload();
+                                }
+                            },
+                            dataType:"json"
+                        });
+                    });
+                }
+            });
+            //监听工具条
+            table.on('tool(user)', function(obj){ //注：tool 是工具条事件名，test 是 table 原始容器的属性 lay-filter="对应的值"
+                var data = obj.data; //获得当前行数据
+                var layEvent = obj.event; //获得 lay-event 对应的值（也可以是表头的 event 参数对应的值）
+
+                if(layEvent === 'detail'){ //查看
+                    layer.open({
+                        type: 2,
+                        title: '用户详情页',
+                        shade: 0,
+                        area: ['893px', '600px'],
+                        maxmin: true,
+                        content: ['/user/'+data.id]
+                    });
+                } else if(layEvent === 'edit'){ //通过
+                    $("#userId").val(data.id);
+                    form.render('userEdit');
+                    layer.open({
+                        type: 1,
+                        title: "修改用户",
+                        area: ['500px', '520px'],
+                        content: $("#userEdit")
+                    });
+                } else if(layEvent === 'del'){ //驳回
+                    layer.confirm('确定要删除用户吗？', {
+                        btn: ['确定','取消'] //按钮
+                    }, function(index){
+                        $.ajax({
+                            type:"post",
+                            url:"/user/deleteUser",
+                            contentType:"application/json",
+                            data:JSON.stringify({
+                                "userId":data.id,
+                            }),
+                            success:function (result) {
+                                if(result.code == 200){
+                                    window.location.reload();
+                                }
+                            },
+                            dataType:"json"
+                        });
+                    });
+                }
+            });
+            //监听工具条
+            table.on('tool(essence)', function(obj){ //注：tool 是工具条事件名，test 是 table 原始容器的属性 lay-filter="对应的值"
+                var data = obj.data; //获得当前行数据
+                var layEvent = obj.event; //获得 lay-event 对应的值（也可以是表头的 event 参数对应的值）
+
+                if(layEvent === 'detail'){ //查看
+                    layer.open({
+                        type: 2,
+                        title: '文章详情页',
+                        shade: 0,
+                        area: ['893px', '600px'],
+                        maxmin: true,
+                        content: ['/question/'+data.id]
+                    });
+                } else if(layEvent === 'edit'){ //通过
+                    $("#questionId").val(data.id);
+                    if(data.essence == true){
+                        $("input[name='essence']:first").prop("checked",true);
+                        $("input[name='essence']:last").prop("checked",false);
+                    }else{
+                        $("input[name='essence']:first").prop("checked",false);
+                        $("input[name='essence']:last").prop("checked",true);
+                    }
+                    if(data.isTop == true){
+                        $("input[name='isTop']:first").prop("checked",true);
+                        $("input[name='isTop']:last").prop("checked",false);
+                    }else{
+                        $("input[name='isTop']:first").prop("checked",false);
+                        $("input[name='isTop']:last").prop("checked",true);
+                    }
+                    form.render('radio', 'questionEdit');
+                    layer.open({
+                        type: 1,
+                        title: "修改文章",
+                        area: ['300px', '220px'],
+                        content: $("#questionEdit")
+                    });
+                } else if(layEvent === 'del'){ //驳回
+                    layer.confirm('确定要删除文章吗？', {
+                        btn: ['确定','取消'] //按钮
+                    }, function(index){
+                        $.ajax({
+                            type:"post",
+                            url:"/question/deleteQu",
+                            contentType:"application/json",
+                            data:JSON.stringify({
+                                "questionId":data.id,
+                                "authorId":data.creator
+                            }),
+                            success:function (result) {
+                                if(result.code == 200){
+                                    window.location.reload();
+                                }
+                            },
+                            dataType:"json"
+                        });
+                    });
+                }
+            });
+        });
+
+        function userEdit() {
+            var id = $("#userId").val();
+            var nickName = $("#nickName").val();
+            var password = $("#password").val();
+            var phone = $("#phone").val();
+            var email = $("#email").val();
+
+            $.ajax({
+                type:"post",
+                url:"/admin/userEdit",
+                contentType:"application/json",
+                data:JSON.stringify({
+                    "id":id,
+                    "nickName": nickName,
+                    "password": password,
+                    "phone": phone,
+                    "email": email
+                }),
+                success:function (result) {
+                    if(result.code == 200){
+                        window.location.reload();
+                    }
+                },
+                dataType:"json"
+            });
+        }
+
+        function questionEdit() {
+            var id = $("#questionId").val();
+            var essence = $("input[name='essence']:checked").val();
+            var isTop = $(".question-radio input[name='isTop']:checked").val();
+            $.ajax({
+                type:"post",
+                url:"/admin/questionEdit",
+                contentType:"application/json",
+                data:JSON.stringify({
+                    "id":id,
+                    "essence":essence,
+                    "isTop":isTop
+                }),
+                success:function (result) {
+                    if(result.code == 200){
+                        window.location.reload();
+                    }
+                },
+                dataType:"json"
+            });
+        }
+
+        function notice() {
+            layui.use('layer',function () {
+                var layer = layui.layer;
+                var id = $("#editQuId").val();
+                var title = $("#title").val();
+                var description = $("#description").val();
+                var isTop = $(".notice-radio input[name='isTop']:checked").val();
+                if(!title){
+                    layer.msg("标题不能为空");
+                }else if(title.length >50){
+                    layer.msg("标题最多50个字符");
+                }else if(!description){
+                    layer.msg("内容不能为空");
+                }else{
+                    $.ajax({
+                        type:"post",
+                        url:"/admin/notice",
+                        contentType:"application/json",
+                        data:JSON.stringify({
+                            "id":id,
+                            "title":title,
+                            "description":description,
+                            "isTop":isTop
+                        }),
+                        success:function (result) {
+                            if(result.code == 200){
+                                window.location.href="/admin/notice";
+                            }
+                        },
+                        dataType:"json"
+                    });
+                }
+            });
+        }
+    </script>
+</head>
+<body class="layui-layout-body">
+<div class="layui-layout layui-layout-admin">
+    <!-- 头部区域 -->
+    <div class="layui-header">
+        <div class="layui-logo">后台管理</div>
+        <ul class="layui-nav layui-layout-right" lay-filter="demo">
+            <li class="layui-nav-item" th:if="${session.adminUser!=null}">
+                <a href="javascript:;">
+                    <img th:src="${session.adminUser.avatarUrl}" class="layui-nav-img" alt="头像">
+                    <cite th:text="${session.adminUser.nickName}"></cite>
+                </a>
+                <dl class="layui-nav-child">
+                    <dd><a href="">基本资料</a></dd>
+                    <dd><a href="">安全设置</a></dd>
+                </dl>
+            </li>
+            <li class="layui-nav-item"><a href="/adminLogout">退出</a></li>
+        </ul>
+    </div>
+    <!-- 左侧导航区域 -->
+    <div class="layui-side layui-bg-black">
+        <div class="layui-side-scroll">
+            <ul class="layui-nav layui-nav-tree"  lay-filter="test">
+                <li class="layui-nav-item layui-nav-itemed" th:classappend="${section == 'index'}?'layui-this':''">
+                    <a class="" href="/admin/index">主页</a>
+                </li>
+                <li class="layui-nav-item layui-nav-itemed">
+                    <a class="" href="javascript:;">文章管理</a>
+                    <dl class="layui-nav-child">
+                        <dd th:classappend="${section == 'notice'}?'layui-this':''"><a href="/admin/notice">发布公告</a></dd>
+                        <dd th:classappend="${section == 'essence'}?'layui-this':''"><a href="/admin/essence">加精与置顶</a></dd>
+                    </dl>
+                </li>
+
+                <li class="layui-nav-item layui-nav-itemed">
+                    <a class="" href="javascript:;">用户管理</a>
+                    <dl class="layui-nav-child">
+                        <dd th:classappend="${section == 'user'}?'layui-this':''"><a href="/admin/user">查询用户</a></dd>
+                    </dl>
+                    <dl class="layui-nav-child">
+                        <dd th:classappend="${section == 'uploadFile'}?'layui-this':''"><a href="/admin/uploadFile">批量导入用户</a></dd>
+                    </dl>
+                </li>
+<!--TODO 文章分类管理-->
+                <li class="layui-nav-item layui-nav-itemed">
+                    <a class="" href="javascript:;">文章分类管理</a>
+                    <dl class="layui-nav-child">
+                        <dd th:classappend="${section == 'question'}?'layui-this':''"><a href="/admin/question">全部</a></dd>
+                        <dd th:classappend="${section == 'ask'}?'layui-this':''"><a href="/admin/ask">提问</a></dd>
+                        <dd th:classappend="${section == 'share'}?'layui-this':''"><a href="/admin/share">分享</a></dd>
+                        <dd th:classappend="${section == 'advice'}?'layui-this':''"><a href="/admin/advice">建议</a></dd>
+                        <dd th:classappend="${section == 'comment'}?'layui-this':''"><a href="/admin/comment">讨论</a></dd>
+                    </dl>
+                </li>
+            </ul>
+        </div>
+    </div>
+    <!-- 内容主体区域 -->
+    <div class="layui-body">
+        <div  style="padding: 15px;">
+            <div th:if="${section == 'index'}">
+                <fieldset class="layui-elem-field layui-field-title" style="margin-top: 30px;">
+                    <legend>仪表盘</legend>
+                </fieldset>
+                <!-- 为ECharts准备一个具备大小（宽高）的Dom -->
+                <div>
+                <div id="main" style="width: 500px;height:400px; float:left"></div>
+                    <div id="questionCount" style="width: 500px;height:400px; float:left"></div>
+                    <script type="text/javascript">
+                        var myChart2 = echarts.init(document.getElementById('questionCount'), 'wonderland');
+                        myChart2.setOption({
+                            title: {text:"各类型文章数目"},
+                            xAxis: {data:[]},
+                            yAxis:{},
+                            series: [{name:"test", type:"bar", data:[]}]
+                        });
+                        $.ajax({
+                            url:"/question/getTypeCount",
+                            async:false,
+                            cache:false,
+                            success:function (data) {
+                                myChart2.setOption({
+                                    xAxis: {data: data.categories},
+                                    series:[{name:'test', data: data.data}]
+                                });
+                            },
+                            error:function(error){
+                                console.log(error);
+                            }
+                        });
+                    </script>
+                    <script type="text/javascript">
+                        // 基于准备好的dom，初始化echarts实例
+                        var myChart = echarts.init(document.getElementById('main'), 'wonderland');
+                        // TODO
+                        // 指定图表的配置项和数据
+                        var option = {
+                            title: {
+                                text: '访问量'
+                            },
+                            tooltip: {},
+                            legend: {
+                                data:['访问量']
+                            },
+                            xAxis: {
+                                data: ["2020-7-2","2020-7-3","2020-7-4","2020-7-5","2020-7-6","2020-7-7"]
+                            },
+                            yAxis: {},
+                            series: [{
+                                name: '访问量',
+                                type: 'line',
+                                data: [7, 23, 12, 50, 23, 29]
+                            }]
+                        };
+
+                        // 使用刚指定的配置项和数据显示图表。
+                        myChart.setOption(option);
+                    </script>
+                </div>
+
+                <div  style="width: 400px;height:400px; margin-bottom: 0;">
+                    <a th:href="@{/(sort='new',search=${search},tag=${tag},type=${type})}" class="layui-this layui-hide-xs new">按最新</a>
+                </div>
+            </div>
+
+<!--            发布公告-->
+            <div th:if="${section == 'notice'}" class="layui-form layui-form-pane">
+                <div class="layui-row layui-col-space15 layui-form-item">
+                    <input type="hidden" id="editQuId" th:value="${question.id}">
+                    <div class="">
+                        <label for="title" class="layui-form-label">标题</label>
+                        <div class="layui-input-block">
+                            <input type="text" id="title" name="title" autocomplete="off"
+                                   class="layui-input" th:value="${question.title}">
+                        </div>
+                    </div>
+                </div>
+                <div class="layui-form-item layui-form-text">
+                    <div id="question-editor" class="layui-input-block">
+                                <textarea name="description" id="description" class="form-control" cols="30" rows="10"
+                                          style="display:none;" th:text="${question.description}"></textarea>
+                    </div>
+                </div>
+                <script type="text/javascript">
+                    $(function () {
+                        var editor = editormd("question-editor", {
+                            width: "100%",
+                            height: 350,
+                            path: "/js/lib/",
+                            delay: 0,
+                            watch: false,
+                            placeholder: "请输入内容",
+                            imageUpload: true,
+                            imageFormats: ["jpg", "jpeg", "gif", "png", "bmp", "webp"],
+                            imageUploadURL: "/file/upload",
+                        });
+                    });
+                </script>
+                <div class="layui-form-item" pane>
+                    <label class="layui-form-label">是否置顶</label>
+                    <div class="layui-input-block notice-radio">
+                        <input type="radio" name="isTop" value="true" title="是" th:attr="checked=${(question.isTop == true || question.isTop == null)?true:false}">
+                        <input type="radio" name="isTop" value="false" title="否" th:attr="checked=${question.isTop == false?true:false}">
+                    </div>
+                </div>
+                <div class="layui-form-item btn-hover">
+                    <button class="layui-btn" onclick="notice()">立即发布</button>
+                </div>
+            </div>
+
+            <div th:if="${section == 'essence'}">
+<!--            帖子-->
+            <table id="essence" lay-filter="essence" ></table>
+            <script type="text/html" id="barDemo">
+                <a class="layui-btn layui-btn-primary layui-btn-sm" lay-event="detail">查看</a>
+                <a class="layui-btn layui-btn-sm" lay-event="edit">编辑</a>
+                <a class="layui-btn layui-btn-danger layui-btn-sm" lay-event="del">删除</a>
+            </script>
+            </div>
+
+<!--            用户-->
+            <div>
+            <table id="user" lay-filter="user" th:if="${section == 'user'}" class="layui-table"></table>
+            <script type="text/html" id="barDemo2">
+                <a class="layui-btn layui-btn-primary layui-btn-sm" lay-event="detail">查看</a>
+                <a class="layui-btn layui-btn-sm" lay-event="edit">编辑</a>
+                <a class="layui-btn layui-btn-danger layui-btn-sm" lay-event="del">删除</a>
+            </script>
+
+                <script type="text/html" id="barDemoSex">
+                    {{#if (d.sex == 0) { }}
+                    <span>男</span>
+                    {{# }else if(d.sex == 1){ }}
+                    <span>女</span>
+                    {{# } }}
+                </script>
+
+            </div>
+<!--批量上传用户-->
+            <div>
+                <div class="layui-upload-drag" lay-filter="uploadFile" th:if="${section == 'uploadFile'}" id="uploadFile">
+                    <i class="layui-icon"></i>
+                    <p>点击上传，或将文件拖拽到此处</p>
+                    <div class="layui-hide" id="uploadDemoView">
+                        <hr>
+                        <img src="" alt="上传成功后渲染" style="max-width: 196px">
+                    </div>
+                </div>
+
+            </div>
+
+            <!--  文章分类-->
+            <div>
+            <table id="question" lay-filter="question" th:if="${section == 'question'}" class="layui-table"></table>
+            <script type="text/html" id="barDemo3">
+                <a class="layui-btn layui-btn-primary layui-btn-sm" lay-event="detail">查看</a>
+<!--                <a class="layui-btn layui-btn-sm" lay-event="edit">编辑</a>-->
+                <a class="layui-btn layui-btn-danger layui-btn-sm" lay-event="del">删除</a>
+            </script>
+            </div>
+
+            <div>
+                <table id="ask" lay-filter="ask" th:if="${section == 'ask'}" class="layui-table"></table>
+                <script type="text/html" id="askbar">
+                    <a class="layui-btn layui-btn-primary layui-btn-sm" lay-event="detail">查看</a>
+                    <a class="layui-btn layui-btn-danger layui-btn-sm" lay-event="del">删除</a>
+                </script>
+            </div>
+            <div>
+                <table id="share" lay-filter="question" th:if="${section == 'share'}" class="layui-table"></table>
+                <script type="text/html" id="sharebar">
+                    <a class="layui-btn layui-btn-primary layui-btn-sm" lay-event="detail">查看</a>
+                    <a class="layui-btn layui-btn-danger layui-btn-sm" lay-event="del">删除</a>
+                </script>
+            </div>
+            <div>
+                <table id="advice" lay-filter="question" th:if="${section == 'advice'}" class="layui-table"></table>
+                <script type="text/html" id="advicebar">
+                    <a class="layui-btn layui-btn-primary layui-btn-sm" lay-event="detail">查看</a>
+                    <a class="layui-btn layui-btn-danger layui-btn-sm" lay-event="del">删除</a>
+                </script>
+            </div>
+            <div>
+                <table id="comment" lay-filter="question" th:if="${section == 'comment'}" class="layui-table"></table>
+                <script type="text/html" id="commentbar">
+                    <a class="layui-btn layui-btn-primary layui-btn-sm" lay-event="detail">查看</a>
+                    <a class="layui-btn layui-btn-danger layui-btn-sm" lay-event="del">删除</a>
+                </script>
+            </div>
+        </div>
+    </div>
+    <!-- 帖子编辑弹出层 -->
+    <div class="layui-form" id="questionEdit" lay-filter="questionEdit" style="display: none;margin-top: 15px;">
+        <input type="hidden" id="questionId">
+        <div class="layui-form-item">
+            <label class="layui-form-label">加精</label>
+            <div class="layui-input-block">
+                <input type="radio" name="essence" value="true" title="是">
+                <input type="radio" name="essence" value="false" title="否">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">置顶</label>
+            <div class="layui-input-block question-radio">
+                <input type="radio" name="isTop" value="true" title="是">
+                <input type="radio" name="isTop" value="false" title="否">
+            </div>
+
+        <div class="layui-form-item" style="text-align: center">
+            <button class="layui-btn" onclick="questionEdit()">确认修改</button>
+        </div>
+    </div>
+
+
+    <!-- 底部固定区域 -->
+    <div class="layui-footer">
+        <div>luye111.icu</div>
+    </div>
+</div>
+    <div class="layui-form" id="userEdit" lay-filter="userEdit" style="display: none; ">
+<!--       js交互 -->
+        <input type="hidden" id="userId">
+        <div class="layui-form-item">
+            <label class="layui-form-label">用户名</label>
+            <input type="text" class="el-input" id="nickName" name="nickName" placeholder="用户名" autocomplete="off" onkeyup="checkNickName()">
+            <p class="error-message"></p>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">密码</label>
+            <input type="password" class="el-input" id="password" name="password" placeholder="密码（6-16个字符组成，区分大小写）" autocomplete="off" onkeyup="checkPassword()">
+            <p class="error-message"></p>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">常用手机号</label>
+            <input type="text" class="el-input" id="phone" name="phone" placeholder="常用手机号" autocomplete="off" onkeyup="checkPhone()">
+            <p class="error-message"></p>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">邮箱</label>
+            <input type="text" class="el-input" id="email" name="email" placeholder="邮箱" autocomplete="off">
+            <p class="error-message"></p>
+        </div>
+        <div class="layui-form-item" style="text-align: center">
+            <button class="layui-btn" onclick="userEdit()">确认修改</button>
+        </div>
+
+    </div>
+
+</div>
+</body>
+</html>

@@ -9,8 +9,13 @@
 
 后台 http://luye111.icu:4396/adminLogin
 
-注册后使用手机号登录
-
+### 初次使用
+- 注册后使用手机号登录
+- 运行sql脚本
+- 打开Redis
+```shell script
+redis-server.exe redis.windows.conf
+```
 ### 暂未修复bug
 
 头像修改后未显示

@@ -89,10 +89,10 @@ public class QuestionController {
     @ResponseBody
     public Map<String, Object> getTypeCount(@RequestParam(name = "page",defaultValue = "0")Integer page,
                                             @RequestParam(name = "limit",defaultValue = "5")Integer limit){
-        String categories[] = {"提问", "分享", "建议", "讨论"};
+        String[] categories = {"提问", "分享", "建议", "讨论"};
         int[] data = new int[10];
         for(int i=0; i<categories.length;i++){
-            data[i] = questionService.getQuestionByType(page, limit, i).size();
+            data[i] = questionService.getQuestionByType(page, limit, i+1).size();
         }
 
         Map<String, Object> map = new HashMap<>();

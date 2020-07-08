@@ -107,6 +107,7 @@ public class AdminController {
                                     @RequestParam(name = "limit",defaultValue = "5")Integer limit){
         List<Question> question = questionService.getQuestionByType(page-1, limit, 1);
         for(Question q:question){
+            q.setGmtCreateModified(TimeFormatUtils.GmtformatTime(q.getGmtCreate()));
             System.out.println(q.toString());
         }
         int count = question.size();
@@ -124,6 +125,7 @@ public class AdminController {
             @RequestParam(name = "limit",defaultValue = "5")Integer limit){
         List<Question> question = questionService.getQuestionByType(page-1, limit, 2);
         for(Question q:question){
+            q.setGmtCreateModified(TimeFormatUtils.GmtformatTime(q.getGmtCreate()));
             System.out.println(q.toString());
         }
         int count = question.size();
@@ -141,6 +143,7 @@ public class AdminController {
             @RequestParam(name = "limit",defaultValue = "5")Integer limit){
         List<Question> question = questionService.getQuestionByType(page-1, limit, 3);
         for(Question q:question){
+            q.setGmtCreateModified(TimeFormatUtils.GmtformatTime(q.getGmtCreate()));
             System.out.println(q.toString());
         }
         int count = question.size();
@@ -158,6 +161,7 @@ public class AdminController {
             @RequestParam(name = "limit",defaultValue = "5")Integer limit){
         List<Question> question = questionService.getQuestionByType(page-1, limit, 4);
         for(Question q:question){
+            q.setGmtCreateModified(TimeFormatUtils.GmtformatTime(q.getGmtCreate()));
             System.out.println(q.toString());
         }
         int count = question.size();
